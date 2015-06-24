@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<ScriptFunctionDefinition>
+    <Version Major="1" Minor="0" />
+    <Name>[TERR] create_dendrogram</Name>
+    <Script>.t0 &lt;- proc.time()[3]&#x0A;&#x0A;msg &lt;- &quot;dendrogram&quot;&#x0A;library(RinR)&#x0A;options(RinR_R_FULL_PATH=rpath)&#x0A;library(arbor)&#x0A;&#x0A;df &lt;- data.frame(y=sample(letters[sample(1:length(letters), m)], n, replace=TRUE), &#x0A;  x1=rnorm(n), x2=runif(n), x3=sample(LETTERS, n, replace=TRUE))&#x0A;fit &lt;- arbor(y ~ x1 + x2 + x3, method=&quot;class&quot;, data=df)&#x0A;&#x0A;y &lt;- try(img &lt;- RGraph({&#x0A;  library(&quot;rpart&quot;);&#x0A;  class(fit) &lt;- &quot;rpart&quot;;&#x0A;  assign(&quot;formatg&quot;, function(x, digits = options()$digits, format = paste(&quot;%.&quot;,digits, &quot;g&quot;, sep = &quot;&quot;)) &#x0A;   {if(!is.numeric(x)) {stop(&quot;&apos;x&apos; must be a numeric vector&quot;)}; &#x0A;    temp &lt;- sprintf(format, x); if(is.matrix(x)) {matrix(temp, nrow = nrow(x))} else temp}, envir=.GlobalEnv);&#x0A;  par(mfrow = c(1,2), xpd = NA); &#x0A;  plot(fit, uniform=TRUE, main=&quot;Random Classification Tree&quot;); &#x0A;  text(fit, use.n=TRUE, all=TRUE, cex=.8)}, &#x0A;  width=500, height=500, display=FALSE))&#x0A;&#x0A;# Run this to show a graphic in the RStudio Viewer pane.&#x0A;# RGraph({&#x0A;# library(&quot;rpart&quot;);&#x0A;# class(fit) &lt;- &quot;rpart&quot;;&#x0A;# assign(&quot;formatg&quot;, function(x, digits = options()$digits, format = paste(&quot;%.&quot;,digits, &quot;g&quot;, sep = &quot;&quot;)) &#x0A;# {if(!is.numeric(x)) {stop(&quot;&apos;x&apos; must be a numeric vector&quot;)}; &#x0A;#   temp &lt;- sprintf(format, x); if(is.matrix(x)) {matrix(temp, nrow = nrow(x))} else temp}, envir=.GlobalEnv);&#x0A;# par(mfrow = c(1,2), xpd = NA); &#x0A;# plot(fit, uniform=TRUE, main=&quot;Random Classification Tree&quot;); &#x0A;# text(fit, use.n=TRUE, all=TRUE, cex=.8)}, width=500, height=500, display=TRUE)&#x0A;&#x0A;if (is(y, &quot;try-error&quot;)) {&#x0A;  img &lt;- raw(1)&#x0A;  msg &lt;- paste(as.character(attr(y, &quot;condition&quot;)), collapse=&quot;\n&quot;)&#x0A;}&#x0A;&#x0A;timing &lt;- proc.time()[3] - .t0&#x0A;stamp &lt;- format(Sys.time(), &quot;%Y-%m-%d %H:%M:%S %Z&quot;)&#x0A;</Script>
+    <Language>TERR</Language>
+    <Input>
+        <Name>rpath</Name>
+        <Type>Value</Type>
+        <DisplayName>path to R.exe</DisplayName>
+        <Description>path to R.exe</Description>
+        <IsOptional>false</IsOptional>
+        <AllowedDataType>String</AllowedDataType>
+    </Input>
+    <Input>
+        <Name>m</Name>
+        <Type>Value</Type>
+        <DisplayName>response levels</DisplayName>
+        <Description>number of response levels</Description>
+        <IsOptional>false</IsOptional>
+        <AllowedDataType>Integer</AllowedDataType>
+    </Input>
+    <Input>
+        <Name>n</Name>
+        <Type>Value</Type>
+        <DisplayName>rows</DisplayName>
+        <Description>number of rows</Description>
+        <IsOptional>false</IsOptional>
+        <AllowedDataType>Integer</AllowedDataType>
+    </Input>
+    <Output>
+        <Name>img</Name>
+        <Type>Value</Type>
+        <DisplayName>output image</DisplayName>
+        <Description>output image</Description>
+    </Output>
+    <Output>
+        <Name>msg</Name>
+        <Type>Value</Type>
+        <DisplayName>message</DisplayName>
+        <Description>message</Description>
+    </Output>
+    <Output>
+        <Name>stamp</Name>
+        <Type>Value</Type>
+        <DisplayName>stamp</DisplayName>
+        <Description>time stamp of last run</Description>
+    </Output>
+    <Output>
+        <Name>timing</Name>
+        <Type>Value</Type>
+        <DisplayName>timing</DisplayName>
+        <Description>timing of last run</Description>
+    </Output>
+    <Description>Create a dendrogram for viewing in Spotfire Analyst. keywords: dendrogram;graphics;jminardi</Description>
+    <AllowCaching>false</AllowCaching>
+</ScriptFunctionDefinition>

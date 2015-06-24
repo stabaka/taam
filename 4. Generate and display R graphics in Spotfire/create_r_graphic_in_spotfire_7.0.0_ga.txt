@@ -1,0 +1,40 @@
+To use the analysis
+-------------------
+Navigate to the "heatmap" page. Replace the path to R with the 
+appropriate path on your system. R versions 3.1.x or 3.2.x are
+suggested. Set the dimension slider as desired (optional) and 
+click the Refresh >> link. The heatmap at the left will update.
+Instructions are similar for the "dendrogram" page.
+
+To view the Data Function
+-------------------------
+Go to Edit > Data Function Properties in the main menu to open the 
+Data Function Properties dialog. Click its Data Function tab.
+Select a Data Function from the list and click the Edit Script button.
+This shows the script, the input parameters, and the output parameters.
+Click Cancel to return to the Data Function Properties dialog. Click the 
+Edit Parameters button to see how the input and output parameters are
+mapped to items in the Spotfire Analysis.
+
+To import the Data Function from an *.sfd file
+----------------------------------------------
+From the Data Functions Properties dialog above, click "Register New".
+Click the Import toolbar item at top, and navigate the the *.sfd file,
+select it, and click Open. Click the Run toolbar item at top, and
+map all the inputs and outputs. When finished, click OK. You can do
+this in a different Spotfire Analysis; refer to the mapping in the
+example file.
+
+To run the data function in RStudio
+-----------------------------------
+Run RStudio with TERR. This is done by setting the R version in the 
+RStudio Tools > Options dialog. See 
+https://docs.tibco.com/pub/enterprise-runtime-for-R/3.2.0/doc/pdf/TIB_terr_Using-TERR-with-RStudio.pdf
+for more details.
+Open the file "[R] create_heatmap.R" or "[R] create_dendrogram.R"
+in RStudio. In the section labeled "Start interactive configuration", 
+update the value of rpath and set any other variables as desired. 
+Run the script. 
+
+To preview the graphic in RStudio, uncomment the lines following 
+"Run this to show a graphic in the RStudio Viewer pane" and run them.

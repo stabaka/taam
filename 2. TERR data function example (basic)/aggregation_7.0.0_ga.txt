@@ -1,0 +1,16 @@
+To use the analysis
+-------------------
+Select some rows from the Table visualization in the center of
+the page. See the corresponding median aggregations appear in
+the Table visualization at the right. To deselect all rows in the
+Table visualization in the center, click on the visualization, 
+and then press Ctrl-E.
+
+To view the Data Function
+-------------------------
+Go to Edit > Data Table Properties, Data Function tab in the main menu.
+Select the Data Function from the list and click the Edit Script button.
+This shows the script, the input parameters, and the output parameters.
+Click Cancel to return to the Data Function Properties dialog. Click the 
+Edit Parameters button to see how the input and output parameters are
+mapped to items in the Spotfire Analysis.

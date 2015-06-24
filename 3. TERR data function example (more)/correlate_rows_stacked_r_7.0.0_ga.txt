@@ -1,0 +1,26 @@
+To use the analysis
+-------------------
+In the Text Area at the left, select some colunms under "Numerical
+Fields of Interest". These form a profile for each company (=row)
+in the Data Table. After filtering (optional), select some rows in 
+the Table visualization in the center. The correlation, matrix at
+bottom will update accordingly.
+
+To view the Data Function
+-------------------------
+Go to Edit > Data Function Properties in the main menu to open the 
+Data Function Properties dialog. Click its Data Function tab.
+Select the Data Function from the list and click the Edit Script button.
+This shows the script, the input parameters, and the output parameters.
+Click Cancel to return to the Data Function Properties dialog. Click the 
+Edit Parameters button to see how the input and output parameters are
+mapped to items in the Spotfire Analysis.
+
+To import the Data Function from an *.sfd file
+----------------------------------------------
+From the Data Functions Properties dialog above, click "Register New".
+Click the Import toolbar item at top, and navigate the the *.sfd file,
+select it, and click Open. Click the Run toolbar item at top, and
+map all the inputs and outputs. When finished, click OK. You can do
+this in a different Spotfire Analysis; refer to the mapping in the
+example file.

@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<ScriptFunctionDefinition>
+    <Version Major="1" Minor="0" />
+    <Name>[TERR] correlation by rows (stacked)</Name>
+    <Script>.t0 &lt;- proc.time()[3]&#x0A;&#x0A;&#x0A;# Create placeholder when no rows are passed.&#x0A;if (nrow(x) == 0) {&#x0A;  x &lt;- data.frame(a=&quot;select companies above&quot;, b=1)&#x0A;}&#x0A;&#x0A;nms &lt;- x[, 1]&#x0A;# If nms has duplicate values, fix.&#x0A;if (any(duplicated(nms))) {&#x0A;  nms &lt;- as.character(nms)&#x0A;  ord &lt;- order(nms)&#x0A;  &#x0A;  osuff &lt;- as.character(unlist(lapply(rle(sort(nms))[[&quot;lengths&quot;]], seq)))&#x0A;  suff &lt;- ifelse(osuff == &quot;1&quot;, &quot;&quot;, osuff)[order(ord)]&#x0A;  nms &lt;- paste(nms, suff, sep=&quot;&quot;)&#x0A;}&#x0A;&#x0A;x &lt;- x[, -1]&#x0A;y &lt;- cor(t(as.matrix(x)), use=&quot;na.or.complete&quot;)&#x0A;z &lt;- expand.grid(var1=nms, var2=nms)&#x0A;z[, &quot;correlation&quot;] &lt;- as.vector(y)&#x0A;&#x0A;timing &lt;- proc.time()[3] - .t0&#x0A;stamp &lt;- format(Sys.time(), &quot;%Y-%m-%d %H:%M:%S %Z&quot;)&#x0A;</Script>
+    <Language>TERR</Language>
+    <Input>
+        <Name>x</Name>
+        <Type>Table</Type>
+        <DisplayName>x</DisplayName>
+        <Description>input table</Description>
+        <IsOptional>false</IsOptional>
+    </Input>
+    <Output>
+        <Name>z</Name>
+        <Type>Table</Type>
+        <DisplayName>z</DisplayName>
+        <Description>output table of correlations</Description>
+    </Output>
+    <Output>
+        <Name>stamp</Name>
+        <Type>Value</Type>
+        <DisplayName>stamp</DisplayName>
+        <Description>time stamp of last run</Description>
+    </Output>
+    <Output>
+        <Name>timing</Name>
+        <Type>Value</Type>
+        <DisplayName>timing</DisplayName>
+        <Description>timing of last run</Description>
+    </Output>
+    <Description>return a stacked version of a correlation matrix keywords: correlation;jminardi</Description>
+    <AllowCaching>false</AllowCaching>
+</ScriptFunctionDefinition>

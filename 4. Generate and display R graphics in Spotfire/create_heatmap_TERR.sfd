@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<ScriptFunctionDefinition>
+    <Version Major="1" Minor="0" />
+    <Name>[TERR] create_heatmap</Name>
+    <Script>.t0 &lt;- proc.time()[3]&#x0A;&#x0A;msg &lt;- &quot;heatmap&quot;&#x0A;library(RinR)&#x0A;options(RinR_R_FULL_PATH=rpath)&#x0A;z &lt;- matrix(rnorm(n^2), n, n)&#x0A;y &lt;- try(img &lt;- RGraph(image(list(x=1:n, y=1:n, z=z * row(z) * col(z))), &#x0A;  width=500, height=500, display=FALSE))&#x0A;&#x0A;# Run this to show a graphic in the RStudio Viewer pane.&#x0A;# RGraph(image(list(x=1:n, y=1:n, z=z * row(z) * col(z))), width=500, height=500, display=TRUE)&#x0A;&#x0A;if (is(y, &quot;try-error&quot;)) {&#x0A;  img &lt;- raw(1)&#x0A;  msg &lt;- paste(as.character(attr(y, &quot;condition&quot;)), collapse=&quot;\n&quot;)&#x0A;}&#x0A;&#x0A;timing &lt;- proc.time()[3] - .t0&#x0A;stamp &lt;- format(Sys.time(), &quot;%Y-%m-%d %H:%M:%S %Z&quot;)&#x0A;</Script>
+    <Language>TERR</Language>
+    <Input>
+        <Name>rpath</Name>
+        <Type>Value</Type>
+        <DisplayName>path to R.exe</DisplayName>
+        <Description>path to R.exe</Description>
+        <IsOptional>false</IsOptional>
+        <AllowedDataType>String</AllowedDataType>
+    </Input>
+    <Input>
+        <Name>n</Name>
+        <Type>Value</Type>
+        <DisplayName>dims</DisplayName>
+        <Description>number of dims</Description>
+        <IsOptional>false</IsOptional>
+        <AllowedDataType>Integer</AllowedDataType>
+    </Input>
+    <Output>
+        <Name>img</Name>
+        <Type>Value</Type>
+        <DisplayName>output image</DisplayName>
+        <Description>output image</Description>
+    </Output>
+    <Output>
+        <Name>msg</Name>
+        <Type>Value</Type>
+        <DisplayName>message</DisplayName>
+        <Description>message</Description>
+    </Output>
+    <Output>
+        <Name>stamp</Name>
+        <Type>Value</Type>
+        <DisplayName>stamp</DisplayName>
+        <Description>time stamp of last run</Description>
+    </Output>
+    <Output>
+        <Name>timing</Name>
+        <Type>Value</Type>
+        <DisplayName>timing</DisplayName>
+        <Description>timing of last run</Description>
+    </Output>
+    <Description>Create a heatmap for viewing in Spotfire Analyst. keywords: heatmap;graphics;jminardi</Description>
+    <AllowCaching>false</AllowCaching>
+</ScriptFunctionDefinition>
