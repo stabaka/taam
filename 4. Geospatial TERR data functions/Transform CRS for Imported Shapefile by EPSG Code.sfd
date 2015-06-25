@@ -1,0 +1,128 @@
+<?xml version="1.0"?>
+<ScriptFunctionDefinition xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <Version Major="1" Minor="0" />
+  <Name>Transform CRS for Imported Shapefile by EPSG Code</Name>
+  <Script># Data function that converts an imported shapefile from one coordinate reference system to another, using EPSG codes to specify the reference systems
+# Requires the R packages `sp`, `rgdal`, and `wkb`
+# Note that the environment variable GDAL_DATA must be set to the location of the gdal folder in the rgdal folder in the library folder where TERR is installed.
+# EPSG codes can be looked up from the .prj files in shapefiles at http://prj2epsg.org/
+
+# inputs:
+#	TableIn - The table imported from a shapefile containing the shapes to be transformed
+#	EPSGIn - The 4-digit EPSG code identifying the reference system of the input shapes. EPSG codes can be looked up from the .prj files in shapefiles at http://prj2epsg.org/.
+#	EPSGOut - The 4-digit EPSG code string identifying the desired reference system for the output shapes. The 4-digit EPSG code string identifying the desired reference system for the output shapes. Use 4326 for standard WGS84 latitude/longitude coordinates.
+# output:
+#	TableOut - The table containing the transformed shapes, in the new reference system
+
+suppressWarnings(suppressMessages(library(sp)))
+suppressWarnings(suppressMessages(library(rgdal)))
+library(wkb)
+
+Proj4In &lt;- CRS(paste0("+init=epsg:", EPSGIn))
+Proj4Out &lt;- CRS(paste0("+init=epsg:", EPSGOut))
+
+XCenterColumnName &lt;- NULL
+YCenterColumnName &lt;- NULL
+XMinColumnName &lt;- NULL
+YMinColumnName &lt;- NULL
+XMaxColumnName &lt;- NULL
+YMaxColumnName &lt;- NULL
+GeometryColumnName &lt;- NULL
+
+for (thiscolname in colnames(TableIn)) {
+	thiscoltype &lt;- attr(TableIn[,thiscolname], "SpotfireColumnMetaData")$MapChart.ColumnTypeId
+	if(identical(thiscoltype, "XCenter")) XCenterColumnName &lt;- thiscolname
+	if(identical(thiscoltype, "YCenter")) YCenterColumnName &lt;- thiscolname
+	if(identical(thiscoltype, "XMin")) XMinColumnName &lt;- thiscolname
+	if(identical(thiscoltype, "YMin")) YMinColumnName &lt;- thiscolname
+	if(identical(thiscoltype, "XMax")) XMaxColumnName &lt;- thiscolname
+	if(identical(thiscoltype, "YMax")) YMaxColumnName &lt;- thiscolname
+	if(identical(thiscoltype, "Geometry")) GeometryColumnName &lt;- thiscolname
+}
+
+if(is.null(XCenterColumnName) || is.null(YCenterColumnName) || is.null(XMinColumnName) || is.null(YMinColumnName) || is.null(XMaxColumnName) || is.null(YMaxColumnName) || is.null(GeometryColumnName)) {
+	stop("Expected columns are missing")
+}
+
+if(!identical(attr(TableIn[,GeometryColumnName], "SpotfireColumnMetaData")$ContentType, "application/x-wkb")) {
+	stop("Only WKB geometry columns are supported")
+}
+
+spatialPointsCenter &lt;- SpatialPoints(data.frame(x=TableIn[,XCenterColumnName], y=TableIn[,YCenterColumnName]), proj4string=Proj4In)
+transformedSpatialPointsCenter &lt;- spTransform(spatialPointsCenter, CRS=Proj4Out)
+
+spatialPointsMin &lt;- SpatialPoints(data.frame(x=TableIn[,XMinColumnName], y=TableIn[,YMinColumnName]), proj4string=Proj4In)
+transformedSpatialPointsMin &lt;- spTransform(spatialPointsMin, CRS=Proj4Out)
+
+spatialPointsMax &lt;- SpatialPoints(data.frame(x=TableIn[,XMaxColumnName], y=TableIn[,YMaxColumnName]), proj4string=Proj4In)
+transformedSpatialPointsMax &lt;- spTransform(spatialPointsMax, CRS=Proj4Out)
+
+spatialObject &lt;- readWKB(TableIn[,GeometryColumnName], as.character(seq_along(TableIn[,GeometryColumnName])), proj4string=Proj4In)
+if(is.list(spatialObject)) {
+	transformedSpatialObject &lt;- lapply(spatialObject, spTransform, CRS=Proj4Out)
+} else {
+	transformedSpatialObject &lt;- spTransform(spatialObject, CRS=Proj4Out)
+}
+
+transformedSpatialObjectTable &lt;- data.frame(Geometry=writeWKB(transformedSpatialObject))
+colnames(transformedSpatialObjectTable) &lt;- GeometryColumnName
+
+TableOut &lt;- TableIn
+TableColnames &lt;- colnames(TableOut)
+
+TableOut[,XCenterColumnName] &lt;- transformedSpatialPointsCenter@coords[,"x"]
+TableOut[,YCenterColumnName] &lt;- transformedSpatialPointsCenter@coords[,"y"]
+TableOut[,XMinColumnName] &lt;- transformedSpatialPointsMin@coords[,"x"]
+TableOut[,YMinColumnName] &lt;- transformedSpatialPointsMin@coords[,"y"]
+TableOut[,XMaxColumnName] &lt;- transformedSpatialPointsMax@coords[,"x"]
+TableOut[,YMaxColumnName] &lt;- transformedSpatialPointsMax@coords[,"y"]
+TableOut[,GeometryColumnName] &lt;- NULL
+TableOut &lt;- cbind(TableOut, transformedSpatialObjectTable)
+TableOut &lt;- TableOut[,TableColnames]
+
+attr(TableOut[,XCenterColumnName], "SpotfireColumnMetaData") &lt;- list(`MapChart.ColumnTypeId`="XCenter")
+attr(TableOut[,YCenterColumnName], "SpotfireColumnMetaData") &lt;- list(`MapChart.ColumnTypeId`="YCenter")
+attr(TableOut[,XMinColumnName], "SpotfireColumnMetaData") &lt;- list(`MapChart.ColumnTypeId`="XMin")
+attr(TableOut[,YMinColumnName], "SpotfireColumnMetaData") &lt;- list(`MapChart.ColumnTypeId`="YMin")
+attr(TableOut[,XMaxColumnName], "SpotfireColumnMetaData") &lt;- list(`MapChart.ColumnTypeId`="XMax")
+attr(TableOut[,YMaxColumnName], "SpotfireColumnMetaData") &lt;- list(`MapChart.ColumnTypeId`="YMax")
+</Script>
+  <Language>TERR</Language>
+  <Input>
+    <Name>TableIn</Name>
+    <Type>Table</Type>
+    <DisplayName>Table from shapefile for input</DisplayName>
+    <Description>The table imported from a shapefile containing the shapes to be transformed</Description>
+    <AllowedDataType>Integer</AllowedDataType>
+    <AllowedDataType>Double</AllowedDataType>
+    <AllowedDataType>Float</AllowedDataType>
+    <AllowedDataType>Decimal</AllowedDataType>
+    <AllowedDataType>String</AllowedDataType>
+    <AllowedDataType>Date</AllowedDataType>
+    <AllowedDataType>Time</AllowedDataType>
+    <AllowedDataType>DateTime</AllowedDataType>
+    <AllowedDataType>Bool</AllowedDataType>
+    <AllowedDataType>Binary</AllowedDataType>
+  </Input>
+  <Input>
+    <Name>EPSGIn</Name>
+    <Type>Value</Type>
+    <DisplayName>Input EPSG code</DisplayName>
+    <Description>The 4-digit EPSG code identifying the reference system of the input shapes. EPSG codes can be looked up from the .prj files in shapefiles at http://prj2epsg.org/.</Description>
+    <AllowedDataType>Integer</AllowedDataType>
+  </Input>
+  <Input>
+    <Name>EPSGOut</Name>
+    <Type>Value</Type>
+    <DisplayName>Output EPSG code</DisplayName>
+    <Description>The 4-digit EPSG code string identifying the desired reference system for the output shapes. Use 4326 for standard WGS84 latitude/longitude coordinates.</Description>
+    <AllowedDataType>Integer</AllowedDataType>
+  </Input>
+  <Output>
+    <Name>TableOut</Name>
+    <Type>Table</Type>
+    <DisplayName>Table for output</DisplayName>
+    <Description>The table containing the transformed shapes, in the new reference system</Description>
+  </Output>
+  <Description>Data function that converts an imported shapefile from one coordinate reference system to another, using EPSG codes to specify the reference systems. Requires the R packages `sp`, `rgdal`, and `wkb`. Note that the environment variable GDAL_DATA must be set to the location of the gdal folder in the rgdal folder in the library folder where TERR is installed. EPSG codes can be looked up from the .prj files in shapefiles at http://prj2epsg.org/</Description>
+</ScriptFunctionDefinition>

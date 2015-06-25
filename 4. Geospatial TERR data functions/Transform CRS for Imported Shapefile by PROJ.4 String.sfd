@@ -1,0 +1,127 @@
+<?xml version="1.0"?>
+<ScriptFunctionDefinition xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <Version Major="1" Minor="0" />
+  <Name>Transform CRS for Imported Shapefile by PROJ.4 String</Name>
+  <Script># Data function that converts an imported shapefile from one coordinate reference system to another, using PROJ.4 strings to specify the reference systems
+# Requires the R packages `sp`, `rgdal`, and `wkb`
+# PROJ.4 strings can be looked up at http://spatialreference.org/
+
+# inputs:
+#	TableIn - The table imported from a shapefile containing the shapes to be transformed
+#	Proj4In - The PROJ.4 string identifying the reference system of the input shapes
+#	Proj4Out - The PROJ.4 string identifying the desired reference system for the output shapes. Use "+proj=longlat +datum=WGS84" for standard WGS84 latitude/longitude coordinates.
+# output:
+#	TableOut - The table containing the transformed shapes, in the new reference system
+
+suppressWarnings(suppressMessages(library(sp)))
+suppressWarnings(suppressMessages(library(rgdal)))
+library(wkb)
+
+Proj4In &lt;- CRS(Proj4In)
+Proj4Out &lt;- CRS(Proj4Out)
+
+XCenterColumnName &lt;- NULL
+YCenterColumnName &lt;- NULL
+XMinColumnName &lt;- NULL
+YMinColumnName &lt;- NULL
+XMaxColumnName &lt;- NULL
+YMaxColumnName &lt;- NULL
+GeometryColumnName &lt;- NULL
+
+for (thiscolname in colnames(TableIn)) {
+	thiscoltype &lt;- attr(TableIn[,thiscolname], "SpotfireColumnMetaData")$MapChart.ColumnTypeId
+	if(identical(thiscoltype, "XCenter")) XCenterColumnName &lt;- thiscolname
+	if(identical(thiscoltype, "YCenter")) YCenterColumnName &lt;- thiscolname
+	if(identical(thiscoltype, "XMin")) XMinColumnName &lt;- thiscolname
+	if(identical(thiscoltype, "YMin")) YMinColumnName &lt;- thiscolname
+	if(identical(thiscoltype, "XMax")) XMaxColumnName &lt;- thiscolname
+	if(identical(thiscoltype, "YMax")) YMaxColumnName &lt;- thiscolname
+	if(identical(thiscoltype, "Geometry")) GeometryColumnName &lt;- thiscolname
+}
+
+if(is.null(XCenterColumnName) || is.null(YCenterColumnName) || is.null(XMinColumnName) || is.null(YMinColumnName) || is.null(XMaxColumnName) || is.null(YMaxColumnName) || is.null(GeometryColumnName)) {
+	stop("Expected columns are missing")
+}
+
+if(!identical(attr(TableIn[,GeometryColumnName], "SpotfireColumnMetaData")$ContentType, "application/x-wkb")) {
+	stop("Only WKB geometry columns are supported")
+}
+
+spatialPointsCenter &lt;- SpatialPoints(data.frame(x=TableIn[,XCenterColumnName], y=TableIn[,YCenterColumnName]), proj4string=Proj4In)
+transformedSpatialPointsCenter &lt;- spTransform(spatialPointsCenter, CRS=Proj4Out)
+
+spatialPointsMin &lt;- SpatialPoints(data.frame(x=TableIn[,XMinColumnName], y=TableIn[,YMinColumnName]), proj4string=Proj4In)
+transformedSpatialPointsMin &lt;- spTransform(spatialPointsMin, CRS=Proj4Out)
+
+spatialPointsMax &lt;- SpatialPoints(data.frame(x=TableIn[,XMaxColumnName], y=TableIn[,YMaxColumnName]), proj4string=Proj4In)
+transformedSpatialPointsMax &lt;- spTransform(spatialPointsMax, CRS=Proj4Out)
+
+spatialObject &lt;- readWKB(TableIn[,GeometryColumnName], as.character(seq_along(TableIn[,GeometryColumnName])), proj4string=Proj4In)
+if(is.list(spatialObject)) {
+	transformedSpatialObject &lt;- lapply(spatialObject, spTransform, CRS=Proj4Out)
+} else {
+	transformedSpatialObject &lt;- spTransform(spatialObject, CRS=Proj4Out)
+}
+
+transformedSpatialObjectTable &lt;- data.frame(Geometry=writeWKB(transformedSpatialObject))
+colnames(transformedSpatialObjectTable) &lt;- GeometryColumnName
+
+TableOut &lt;- TableIn
+TableColnames &lt;- colnames(TableOut)
+
+TableOut[,XCenterColumnName] &lt;- transformedSpatialPointsCenter@coords[,"x"]
+TableOut[,YCenterColumnName] &lt;- transformedSpatialPointsCenter@coords[,"y"]
+TableOut[,XMinColumnName] &lt;- transformedSpatialPointsMin@coords[,"x"]
+TableOut[,YMinColumnName] &lt;- transformedSpatialPointsMin@coords[,"y"]
+TableOut[,XMaxColumnName] &lt;- transformedSpatialPointsMax@coords[,"x"]
+TableOut[,YMaxColumnName] &lt;- transformedSpatialPointsMax@coords[,"y"]
+TableOut[,GeometryColumnName] &lt;- NULL
+TableOut &lt;- cbind(TableOut, transformedSpatialObjectTable)
+TableOut &lt;- TableOut[,TableColnames]
+
+attr(TableOut[,XCenterColumnName], "SpotfireColumnMetaData") &lt;- list(`MapChart.ColumnTypeId`="XCenter")
+attr(TableOut[,YCenterColumnName], "SpotfireColumnMetaData") &lt;- list(`MapChart.ColumnTypeId`="YCenter")
+attr(TableOut[,XMinColumnName], "SpotfireColumnMetaData") &lt;- list(`MapChart.ColumnTypeId`="XMin")
+attr(TableOut[,YMinColumnName], "SpotfireColumnMetaData") &lt;- list(`MapChart.ColumnTypeId`="YMin")
+attr(TableOut[,XMaxColumnName], "SpotfireColumnMetaData") &lt;- list(`MapChart.ColumnTypeId`="XMax")
+attr(TableOut[,YMaxColumnName], "SpotfireColumnMetaData") &lt;- list(`MapChart.ColumnTypeId`="YMax")
+</Script>
+  <Language>TERR</Language>
+  <Input>
+    <Name>TableIn</Name>
+    <Type>Table</Type>
+    <DisplayName>Table from shapefile for input</DisplayName>
+    <Description>The table imported from a shapefile containing the shapes to be transformed</Description>
+    <AllowedDataType>Integer</AllowedDataType>
+    <AllowedDataType>Double</AllowedDataType>
+    <AllowedDataType>Float</AllowedDataType>
+    <AllowedDataType>Decimal</AllowedDataType>
+    <AllowedDataType>String</AllowedDataType>
+    <AllowedDataType>Date</AllowedDataType>
+    <AllowedDataType>Time</AllowedDataType>
+    <AllowedDataType>DateTime</AllowedDataType>
+    <AllowedDataType>Bool</AllowedDataType>
+    <AllowedDataType>Binary</AllowedDataType>
+  </Input>
+  <Input>
+    <Name>Proj4In</Name>
+    <Type>Value</Type>
+    <DisplayName>Input PROJ.4 string</DisplayName>
+    <Description>The PROJ.4 string identifying the reference system of the input coordinates</Description>
+    <AllowedDataType>String</AllowedDataType>
+  </Input>
+  <Input>
+    <Name>Proj4Out</Name>
+    <Type>Value</Type>
+    <DisplayName>Output PROJ.4 string</DisplayName>
+    <Description>The PROJ.4 string identifying the desired reference system for the output coordinates. Use "+proj=longlat +datum=WGS84" for standard WGS84 latitude/longitude coordinates.</Description>
+    <AllowedDataType>String</AllowedDataType>
+  </Input>
+  <Output>
+    <Name>TableOut</Name>
+    <Type>Table</Type>
+    <DisplayName>Table for output</DisplayName>
+    <Description>The table containing the transformed shapes, in the new reference system</Description>
+  </Output>
+  <Description>Data function that converts an imported shapefile from one coordinate reference system to another, using PROJ.4 strings to specify the reference systems. Requires the R packages `sp`, `rgdal`, and `wkb`. PROJ.4 strings can be looked up at http://spatialreference.org/</Description>
+</ScriptFunctionDefinition>

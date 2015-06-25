@@ -1,0 +1,71 @@
+<?xml version="1.0"?>
+<ScriptFunctionDefinition xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <Version Major="1" Minor="0" />
+  <Name>Points in Polygons for Cartesian Coordinates</Name>
+  <Script># Data function that inputs a set of polygons and a set of points, and outputs which polygon each point is in
+# The points and polygons must be specified in Cartesian (x/y) coordinates
+# Requires the R packages `sp` and `wkb`
+
+# inputs:
+#	Geometry - Binary column representing geometries of non-overlapping polygons specified in x/y Cartesian coordinates
+#	Id - Column of identifiers of the polygons
+#	X - Column of x-coordinates of points
+#	Y - Column of y-coordinates of points
+# output:
+#	Id - Column of identifiers indicating which polygon each point is in, to be added to the table containing the Longitude and Latitude columns. Use the Columns output handler.
+
+suppressWarnings(suppressMessages(library(sp)))
+library(wkb)
+
+spatialPolygons &lt;- readWKB(Geometry, seq_along(Id), proj4string=CRS(as.character(NA)))
+
+coordinates &lt;- data.frame(X=X, Y=Y)
+locationIsKnown &lt;- !is.na(coordinates$X) &amp; !is.na(coordinates$Y)
+spatialPoints &lt;- SpatialPoints(coordinates[locationIsKnown, c("X","Y")], proj4string=CRS(as.character(NA)))
+
+coordinates$Id &lt;- NA
+coordinates[locationIsKnown, "Id"] &lt;- Id[spatialPoints %over% spatialPolygons]
+Id &lt;- coordinates$Id
+</Script>
+  <Language>TERR</Language>
+  <Input>
+    <Name>Geometry</Name>
+    <Type>Column</Type>
+    <DisplayName>Geometry</DisplayName>
+    <Description>Binary column representing geometries of non-overlapping polygons specified in x/y Cartesian coordinates</Description>
+    <AllowedDataType>Binary</AllowedDataType>
+  </Input>
+  <Input>
+    <Name>Id</Name>
+    <Type>Column</Type>
+    <DisplayName>Id</DisplayName>
+    <Description>Column of identifiers of the polygons</Description>
+    <AllowedDataType>Integer</AllowedDataType>
+    <AllowedDataType>Double</AllowedDataType>
+    <AllowedDataType>Float</AllowedDataType>
+    <AllowedDataType>String</AllowedDataType>
+  </Input>
+  <Input>
+    <Name>X</Name>
+    <Type>Column</Type>
+    <DisplayName>X</DisplayName>
+    <Description>Column of x-coordinates of points</Description>
+    <AllowedDataType>Double</AllowedDataType>
+    <AllowedDataType>Float</AllowedDataType>
+  </Input>
+  <Input>
+    <Name>Y</Name>
+    <Type>Column</Type>
+    <DisplayName>Y</DisplayName>
+    <Description>Column of y-coordinates of points</Description>
+    <AllowedDataType>Double</AllowedDataType>
+    <AllowedDataType>Float</AllowedDataType>
+  </Input>
+  <Output>
+    <Name>Id</Name>
+    <Type>Column</Type>
+    <DisplayName>Id</DisplayName>
+    <Description>Column of identifiers indicating which polygon each point is in, to be added to the table containing the Longitude and Latitude columns. Use the Columns output handler.</Description>
+  </Output>
+  <Description>Inputs a set of polygons and a set of points, and outputs which polygon each point is in. The points and polygons must be specified in Cartesian (x/y) coordinates. Requires the R packages `sp` and `wkb`.</Description>
+</ScriptFunctionDefinition>
